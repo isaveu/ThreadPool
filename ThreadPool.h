@@ -54,7 +54,7 @@ template<class TASK>
 int ThreadPool<TASK>::Create()
 {
     for( int i = 0; i < thread_num; i++ )
-        threads.push_back( thread( &ThreadPool<TASK>::ThreadFun ) );//line54
+        threads.push_back( thread( &ThreadPool<TASK>::ThreadFun, this) );
         return 0;
 }
 
