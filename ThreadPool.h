@@ -1,3 +1,6 @@
+#ifndef THREAD_POOL_H
+#define THREAD_POOL_H
+
 #include<stdio.h>
 #include<iostream>
 #include<sys/types.h>
@@ -136,3 +139,5 @@ void Task::showdata()
 {
     cout << TaskData << endl;
 }
+
+#endif
