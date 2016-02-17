@@ -3,7 +3,6 @@
 #include<stdio.h>
 #include<string>
 #include<thread>
-#include<unistd.h>
 
 #include "ThreadPool.h"
 
@@ -16,7 +15,7 @@ public:
     virtual int Run()
     {
         printf("%s\n",(char *)this->TaskData);
-        sleep(5);
+        std::this_thread::sleep_for(std::chrono::seconds(5)); 
         return 0;
     }
 };
@@ -38,7 +37,7 @@ int main()
             exit(0);
         }
     }   
-    sleep(2);
+    std::this_thread::sleep_for(std::chrono::seconds(2)); 
 
     return 0;
 }
