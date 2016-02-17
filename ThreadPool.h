@@ -93,7 +93,7 @@ int ThreadPool<TASK>::PushTask( TASK * task )
 {
     unique_lock<mutex> locker( _x );
     TaskList.push_back( task );
-    _x.unlock();
+    //_x.unlock();
     _cond.notify_one();
     return 0;
 }
