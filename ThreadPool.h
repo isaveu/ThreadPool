@@ -3,10 +3,8 @@
 
 #include<stdio.h>
 #include<iostream>
-#include<sys/types.h>
 #include<vector>
 #include<thread>
-#include<pthread.h>
 #include<stdlib.h>
 #include<mutex>
 #include<string.h>
@@ -27,6 +25,24 @@ class Task
         void showdata();
         virtual ~Task() {};
 };
+
+Task::Task() { TaskName = NULL; TaskData = NULL; }
+
+Task::Task( char * TName )
+{
+    TaskName = TName;
+    TaskData = NULL;
+}
+
+void Task::SetData( void * TData )
+{
+    TaskData = TData;
+}
+
+void Task::showdata()
+{
+    cout << TaskData << endl;
+}
 
 template<class TASK>
 class ThreadPool
@@ -55,7 +71,7 @@ int ThreadPool<TASK>::Create()
 {
     for( int i = 0; i < thread_num; i++ )
         threads.push_back( thread( &ThreadPool<TASK>::ThreadFun, this) );
-        return 0;
+    return 0;
 }
 
 template<class TASK>
@@ -95,12 +111,12 @@ void * ThreadPool<TASK>::ThreadFun()
             printf("Thread %lu will exit.\n",tid);
             return (void *)0;
         }
-        typename vector<TASK>::iterator iter = TaskList.begin();
+        typename vector<TASK*>::iterator iter = TaskList.begin();
         if( iter != TaskList .end() ) {
-            TASK task = *iter;
+            TASK* task = *iter;
             TaskList.erase( iter );
             locker.unlock( );
-            task.Run();
+            task->Run();
             printf("%lu idle.\n",tid);
         }
      }
@@ -122,22 +138,6 @@ int ThreadPool<TASK>::StopAll()
     return 0;
 }
 
-Task::Task() { TaskName = NULL; TaskData = NULL; }
 
-Task::Task( char * TName )
-{
-    TaskName = TName;
-    TaskData = NULL;
-}
-
-void Task::SetData( void * TData )
-{
-    TaskData = TData;
-}
-
-void Task::showdata()
-{
-    cout << TaskData << endl;
-}
 
 #endif
