@@ -10,7 +10,6 @@
 #include<string.h>
 #include<condition_variable>
 
-using namespace std;
 
 class Task
 {
@@ -34,50 +33,49 @@ Task::Task( char * TName )
     TaskData = NULL;
 }
 
-void Task::SetData( void * TData )
+void Task::SetData(void* TData)
 {
     TaskData = TData;
 }
 
 void Task::showdata()
 {
-    cout << TaskData << endl;
+    std::cout << TaskData << std::endl;
 }
 
 template<class TASK>
 class ThreadPool
 {
-    private:
-        int thread_num_;
-        vector<TASK *> task_list_;
-        vector<thread> threads_;
-        bool shutdown;
-        mutex _x;
-        condition_variable  _cond;
+public:
+    ThreadPool(int thread_num = 10);
+    int GetTaskNum();
+    int AddTask(TASK * task);
+    int StopAll();
+    int Create();
+    void ThreadFun();
 
-    public:
-        ThreadPool( int ThN = 10 );
-        int GetTaskNum();
-        int PushTask( TASK * task );
-        int StopAll();
-        int Create();
-
-        void * ThreadFun();
+private:
+    int thread_num_;
+    bool shutdown_;
+    std::vector<std::thread> threads_;
+    std::vector<TASK*> task_list_;
+    std::mutex task_list_mutex_;
+    std::condition_variable condition_;
 };
 
 template<class TASK>
 int ThreadPool<TASK>::Create()
 {
     for( int i = 0; i < thread_num_; i++ )
-        threads_.push_back( thread( &ThreadPool<TASK>::ThreadFun, this) );
+        threads_.push_back(std::thread( &ThreadPool<TASK>::ThreadFun, this));
     return 0;
 }
 
 template<class TASK>
-ThreadPool<TASK>::ThreadPool( int ThN ):thread_num_(ThN)
+ThreadPool<TASK>::ThreadPool(int thread_num):thread_num_(thread_num)
 {
-    shutdown = false;
-    cout << thread_num_  << " numbers threads will be create." << endl;
+    shutdown_ = false;
+    std::cout << thread_num_  << " threads will be create." << std::endl;
     Create();
 }
 
@@ -88,26 +86,26 @@ int ThreadPool<TASK>::GetTaskNum()
 }
 
 template<class TASK>
-int ThreadPool<TASK>::PushTask( TASK * task )
+int ThreadPool<TASK>::AddTask(TASK * task)
 {
-    unique_lock<mutex> locker( _x );
-    task_list_.push_back( task );
-    _cond.notify_one();
+    std::unique_lock<std::mutex> locker(task_list_mutex_);
+    task_list_.push_back(task);
+    condition_.notify_one();
     return 0;
 }
 
 template<class TASK>
-void * ThreadPool<TASK>::ThreadFun()
+void ThreadPool<TASK>::ThreadFun()
 {
     thread::id tid = std::this_thread::get_id();
     while(1) {
-        unique_lock<mutex> locker( _x );
-        while( task_list_.size() == 0 && !shutdown )
-            _cond.wait( locker );
-        if( shutdown ) {
+        std::unique_lock<std::mutex> locker(task_list_mutex_);
+        while (task_list_.size() == 0 && !shutdown_)
+            condition_.wait( locker );
+        if (shutdown_) {
             locker.unlock( );
             printf("Thread %lu will exit.\n",tid);
-            return (void *)0;
+            return;
         }
         typename vector<TASK*>::iterator iter = task_list_.begin();
         if( iter != task_list_.end() ) {
@@ -118,16 +116,15 @@ void * ThreadPool<TASK>::ThreadFun()
             printf("%lu idle.\n",tid);
         }
      }
-     return (void *)0;
 }
 
 template<class TASK>
 int ThreadPool<TASK>::StopAll()
 {
-    if( shutdown ) return -1;
+    if(shutdown_) return -1;
     cout << "All thread will stop." << endl;
-    shutdown = true;
-    _cond.notify_all();
+    shutdown_ = true;
+    condition_.notify_all();
     for( int i = 0; i < thread_num_; i++ )
         threads_[i].join();
 
@@ -135,7 +132,5 @@ int ThreadPool<TASK>::StopAll()
     cout << "The Threadpool is stop." << endl;
     return 0;
 }
-
-
 
 #endif

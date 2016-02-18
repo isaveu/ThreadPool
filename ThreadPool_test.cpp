@@ -29,7 +29,7 @@ void test_ThreadPool()
     ThreadPool<TaskWork> thread_pool(10);
 
     for( int i = 0; i < 20; i++ )    //line 33
-        thread_pool.PushTask( &task );
+        thread_pool.AddTask( &task );
 
     while( 1 ) { 
         if( thread_pool.GetTaskNum() == 0 && thread_pool.StopAll() == -1 )     { 
