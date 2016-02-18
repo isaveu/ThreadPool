@@ -48,11 +48,10 @@ template<class TASK>
 class ThreadPool
 {
     private:
-        int thread_num;
-        vector<TASK *> TaskList;
-        vector<thread> threads;
+        int thread_num_;
+        vector<TASK *> task_list_;
+        vector<thread> threads_;
         bool shutdown;
-
         mutex _x;
         condition_variable  _cond;
 
@@ -69,31 +68,30 @@ class ThreadPool
 template<class TASK>
 int ThreadPool<TASK>::Create()
 {
-    for( int i = 0; i < thread_num; i++ )
-        threads.push_back( thread( &ThreadPool<TASK>::ThreadFun, this) );
+    for( int i = 0; i < thread_num_; i++ )
+        threads_.push_back( thread( &ThreadPool<TASK>::ThreadFun, this) );
     return 0;
 }
 
 template<class TASK>
-ThreadPool<TASK>::ThreadPool( int ThN ):thread_num(ThN)
+ThreadPool<TASK>::ThreadPool( int ThN ):thread_num_(ThN)
 {
     shutdown = false;
-    cout << thread_num  << " numbers threads will be create." << endl;
-    Create();    //line 63
+    cout << thread_num_  << " numbers threads will be create." << endl;
+    Create();
 }
 
 template<class TASK>
 int ThreadPool<TASK>::GetTaskNum()
 {
-    return TaskList.size();
+    return task_list_.size();
 }
 
 template<class TASK>
 int ThreadPool<TASK>::PushTask( TASK * task )
 {
     unique_lock<mutex> locker( _x );
-    TaskList.push_back( task );
-    //_x.unlock();
+    task_list_.push_back( task );
     _cond.notify_one();
     return 0;
 }
@@ -104,17 +102,17 @@ void * ThreadPool<TASK>::ThreadFun()
     thread::id tid = std::this_thread::get_id();
     while(1) {
         unique_lock<mutex> locker( _x );
-        while( TaskList.size() == 0 && !shutdown )
+        while( task_list_.size() == 0 && !shutdown )
             _cond.wait( locker );
         if( shutdown ) {
             locker.unlock( );
             printf("Thread %lu will exit.\n",tid);
             return (void *)0;
         }
-        typename vector<TASK*>::iterator iter = TaskList.begin();
-        if( iter != TaskList .end() ) {
+        typename vector<TASK*>::iterator iter = task_list_.begin();
+        if( iter != task_list_.end() ) {
             TASK* task = *iter;
-            TaskList.erase( iter );
+            task_list_.erase( iter );
             locker.unlock( );
             task->Run();
             printf("%lu idle.\n",tid);
@@ -130,10 +128,10 @@ int ThreadPool<TASK>::StopAll()
     cout << "All thread will stop." << endl;
     shutdown = true;
     _cond.notify_all();
-    for( int i = 0; i < thread_num; i++ )
-    threads[i].join();
+    for( int i = 0; i < thread_num_; i++ )
+        threads_[i].join();
 
-    threads.clear();
+    threads_.clear();
     cout << "The Threadpool is stop." << endl;
     return 0;
 }

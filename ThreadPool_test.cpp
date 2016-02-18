@@ -20,7 +20,7 @@ public:
     }
 };
 
-int main()
+void test_ThreadPool()
 {
     TaskWork task;
     char obj[] = "abc";
@@ -38,6 +38,11 @@ int main()
         }
     }   
     std::this_thread::sleep_for(std::chrono::seconds(2)); 
+}
+
+int main()
+{
+    test_ThreadPool();
 
     return 0;
 }
