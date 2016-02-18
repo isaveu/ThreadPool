@@ -24,8 +24,8 @@ void test_ThreadPool()
 {
     TaskWork task;
     char obj[] = "abc";
-    task.SetData( obj );
-    task.showdata();
+    task.SetData(obj);
+    //task.showdata();
     ThreadPool<TaskWork> thread_pool(10);
 
     for( int i = 0; i < 20; i++ )    //line 33

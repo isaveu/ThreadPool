@@ -1,21 +1,20 @@
 #ifndef THREAD_POOL_H
 #define THREAD_POOL_H
 
-#include<stdio.h>
-#include<iostream>
-#include<vector>
-#include<thread>
-#include<stdlib.h>
-#include<mutex>
-#include<string.h>
-#include<condition_variable>
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <thread>
+#include <functional>
+#include <mutex>
+#include <condition_variable>
 
 
 class Task
 {
     protected:
-        char * TaskName;
-        void * TaskData;
+        char* TaskName;
+        void* TaskData;
     public:
         Task();
         Task( char * TName );
@@ -49,7 +48,7 @@ class ThreadPool
 public:
     ThreadPool(int thread_num = 10);
     int GetTaskNum();
-    int AddTask(TASK * task);
+    int AddTask(TASK* task);
     int StopAll();
     int Create();
     void ThreadFun();
@@ -57,9 +56,9 @@ public:
 private:
     int thread_num_;
     bool shutdown_;
-    std::vector<std::thread> threads_;
-    std::vector<TASK*> task_list_;
-    std::mutex task_list_mutex_;
+    std::vector<std::thread> threads_; 
+    std::queue<TASK*> task_queue_;
+    std::mutex task_queue_mutex_;
     std::condition_variable condition_;
 };
 
@@ -82,14 +81,14 @@ ThreadPool<TASK>::ThreadPool(int thread_num):thread_num_(thread_num)
 template<class TASK>
 int ThreadPool<TASK>::GetTaskNum()
 {
-    return task_list_.size();
+    return task_queue_.size();
 }
 
 template<class TASK>
-int ThreadPool<TASK>::AddTask(TASK * task)
+int ThreadPool<TASK>::AddTask(TASK* task)
 {
-    std::unique_lock<std::mutex> locker(task_list_mutex_);
-    task_list_.push_back(task);
+    std::unique_lock<std::mutex> locker(task_queue_mutex_);
+    task_queue_.emplace(task);
     condition_.notify_one();
     return 0;
 }
@@ -97,24 +96,21 @@ int ThreadPool<TASK>::AddTask(TASK * task)
 template<class TASK>
 void ThreadPool<TASK>::ThreadFun()
 {
-    thread::id tid = std::this_thread::get_id();
+    std::thread::id tid = std::this_thread::get_id();
     while(1) {
-        std::unique_lock<std::mutex> locker(task_list_mutex_);
-        while (task_list_.size() == 0 && !shutdown_)
+        std::unique_lock<std::mutex> locker(task_queue_mutex_);
+        while (task_queue_.size() == 0 && !shutdown_)
             condition_.wait( locker );
         if (shutdown_) {
             locker.unlock( );
             printf("Thread %lu will exit.\n",tid);
             return;
         }
-        typename vector<TASK*>::iterator iter = task_list_.begin();
-        if( iter != task_list_.end() ) {
-            TASK* task = *iter;
-            task_list_.erase( iter );
-            locker.unlock( );
-            task->Run();
-            printf("%lu idle.\n",tid);
-        }
+        TASK* task = task_queue_.front();
+        task_queue_.pop();
+        locker.unlock( );
+        task->Run();
+        printf("%lu idle.\n",tid);
      }
 }
 
