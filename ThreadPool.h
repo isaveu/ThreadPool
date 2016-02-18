@@ -17,11 +17,11 @@ class Task
         void* TaskData;
     public:
         Task();
+        virtual ~Task();
         Task( char * TName );
         virtual int Run() = 0;
         void SetData( void * TData );
         void showdata();
-        virtual ~Task() {};
 };
 
 Task::Task() { TaskName = NULL; TaskData = NULL; }
@@ -30,6 +30,20 @@ Task::Task( char * TName )
 {
     TaskName = TName;
     TaskData = NULL;
+}
+
+Task::~Task()
+{
+    if (TaskName)
+    {
+        delete TaskName;
+        TaskName = NULL;
+    }
+    if (TaskData)
+    {
+        delete TaskData;
+        TaskData = NULL;
+    }
 }
 
 void Task::SetData(void* TData)
@@ -110,6 +124,8 @@ void ThreadPool<TASK>::ThreadFun()
         task_queue_.pop();
         locker.unlock( );
         task->Run();
+        /*delete task;
+        task = NULL;*/
         printf("%lu idle.\n",tid);
      }
 }
