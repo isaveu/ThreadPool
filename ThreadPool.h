@@ -13,7 +13,7 @@
 class ITask
 {
 public:
-	virtual ~ITask() {};
+    virtual ~ITask() {};
     virtual int Run() = 0;
 };
 
