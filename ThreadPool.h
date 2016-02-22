@@ -23,7 +23,7 @@ class ThreadPool
 public:
     ThreadPool(int thread_num = 10);
     int GetTaskNum();
-	int AddTask(ITask* task);
+    int AddTask(ITask* task);
     int StopAll();
     int Create();
     void ThreadFun();
@@ -32,7 +32,7 @@ private:
     int thread_num_;
     bool shutdown_;
     std::vector<std::thread> threads_; 
-	std::queue<ITask*> task_queue_;
+    std::queue<ITask*> task_queue_;
     std::mutex task_queue_mutex_;
     std::condition_variable condition_;
 };
